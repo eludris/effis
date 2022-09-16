@@ -27,7 +27,7 @@ ENV ROCKET_PORT $PORT
 
 ENV RUST_LOG debug
 
-COPY ./.env ./.env
+run mkdir files
 
 CMD ["/bin/effis"]
 
