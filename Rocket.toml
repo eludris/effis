@@ -1,0 +1,11 @@
+[global]
+temp_dir = "tmp"
+
+[global.limits]
+bytes = "100MB"
+data-form = "100MB"
+file = "100MiB"
+form = "100MB"
+json = "1MiB"
+msgpack = "100MiB"
+string = "100KiB"
