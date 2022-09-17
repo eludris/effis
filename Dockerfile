@@ -8,7 +8,7 @@ COPY Cargo.lock Cargo.toml ./
 RUN cargo build --release
 RUN rm src/*.rs
 
-COPY ./src ./src
+COPY ./src Rocket.toml ./
 
 RUN rm ./target/release/deps/effis*
 RUN cargo build --release

@@ -63,7 +63,7 @@ async fn upload(
     } else {
         log::warn!("Got an upload that exeeced the size limit");
         UploadResponse::FileTooBig {
-            max_size: 100_000_000,
+            max_size: 10_000_000,
         }
     })
 }
