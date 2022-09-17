@@ -102,7 +102,7 @@ async fn fetch<'a>(id: u64) -> Result<FetchResponse<'a>, String> {
         ),
         content_type: ContentType::from_extension(
             filename
-                .split(".")
+                .split('.')
                 .last()
                 .ok_or("Server failed to retrieve file")?,
         )
