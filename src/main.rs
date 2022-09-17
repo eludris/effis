@@ -87,8 +87,7 @@ async fn fetch<'a>(id: u64) -> Result<FetchResponse<'a>, String> {
         .ok_or("File not found")?
         .path();
     let filename = filepath
-        .iter()
-        .last()
+        .file_name()
         .ok_or("Server failed to retrieve file")?
         .to_str()
         .ok_or("Server failed to retrieve file")?;
@@ -102,7 +101,7 @@ async fn fetch<'a>(id: u64) -> Result<FetchResponse<'a>, String> {
         ),
         content_type: ContentType::from_extension(
             filename
-                .split(".")
+                .split('.')
                 .last()
                 .ok_or("Server failed to retrieve file")?,
         )
