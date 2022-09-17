@@ -9,3 +9,6 @@ services:
     ports:
       - "7161:7161"
 
+    volumes:
+      - "./files:/files"
+

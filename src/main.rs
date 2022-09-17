@@ -4,6 +4,7 @@ extern crate rocket;
 use rocket::{
     form::Form,
     fs::TempFile,
+    http::{ContentType, Header},
     serde::{json::Json, Deserialize, Serialize},
     tokio::{
         fs::{create_dir, read_dir, File},
@@ -41,7 +42,7 @@ async fn upload(
             Ok(_) => {
                 match data
                     .file
-                    .persist_to(format!("files/{}/{}", id, data.name))
+                    .move_copy_to(format!("files/{}/{}", id, data.name))
                     .await
                 {
                     Ok(_) => {
@@ -67,19 +68,46 @@ async fn upload(
     })
 }
 
+#[derive(Debug, Responder)]
+struct FetchResponse<'a> {
+    file: File,
+    disposition: Header<'a>,
+    content_type: ContentType,
+}
+
 #[get("/<id>")]
-async fn fetch(id: u64) -> Option<File> {
+async fn fetch<'a>(id: u64) -> Result<FetchResponse<'a>, String> {
     let files = Path::new("files").join(id.to_string());
-    let filename = read_dir(files)
+    let filepath = read_dir(files)
         .await
-        .unwrap()
+        .map_err(|_| "Server failed to retrieve file")?
         .next_entry()
         .await
-        .unwrap()
-        .unwrap()
+        .map_err(|_| "Server failed to retrieve file")?
+        .ok_or("File not found")?
         .path();
+    let filename = filepath
+        .iter()
+        .last()
+        .ok_or("Server failed to retrieve file")?
+        .to_str()
+        .ok_or("Server failed to retrieve file")?;
     log::info!("Fetched file with id {}", id);
-    File::open(&filename).await.ok()
+    let file = File::open(&filepath).await.map_err(|_| "File not found")?;
+    Ok(FetchResponse {
+        file,
+        disposition: Header::new(
+            "Content-Disposition",
+            format!("inline; filename=\"{}\"", filename),
+        ),
+        content_type: ContentType::from_extension(
+            filename
+                .split(".")
+                .last()
+                .ok_or("Server failed to retrieve file")?,
+        )
+        .ok_or("Server failed to retrieve file")?,
+    })
 }
 
 #[launch]

@@ -18,6 +18,8 @@ FROM debian:buster-slim
 
 COPY --from=builder /effis/target/release/effis /bin/effis
 
+COPY Rocket.toml Rocket.toml
+
 # Don't forget to also publish these ports in the docker-compose.yml file.
 ARG PORT=7161
 
@@ -26,8 +28,6 @@ ENV ROCKET_ADDRESS 0.0.0.0
 ENV ROCKET_PORT $PORT
 
 ENV RUST_LOG debug
-
-run mkdir files
 
 CMD ["/bin/effis"]
 
