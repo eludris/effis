@@ -15,6 +15,8 @@ use rocket::{
 use std::{env, path::Path};
 use todel::ids::{generate_instance_id, IDGenerator};
 
+const BUCKETS: [&str; 1] = ["avatars"];
+
 #[derive(Debug, FromForm)]
 struct FileData<'a> {
     name: String,
