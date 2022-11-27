@@ -2,5 +2,5 @@
 temp_dir = "./tmp"
 
 [global.limits]
-file = "100MiB"
-data-form = "100MiB"
+file = "10MiB"
+data-form = "10MiB"
