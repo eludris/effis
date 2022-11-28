@@ -1,128 +1,115 @@
 #[macro_use]
 extern crate rocket;
 
+mod cors;
+mod models;
+mod ratelimit;
+mod routes;
+
+use std::env;
+
+use anyhow::{anyhow, Context};
+
 use rocket::{
-    form::Form,
-    fs::TempFile,
-    http::{ContentType, Header},
-    serde::{json::Json, Deserialize, Serialize},
-    tokio::{
-        fs::{create_dir, read_dir, File},
-        sync::Mutex,
-    },
-    Build, Rocket, State,
+    data::{ByteUnit, Limits, ToByteUnit},
+    tokio::sync::Mutex,
+    Build, Config, Rocket,
 };
-use std::{env, path::Path};
-use todel::ids::{generate_instance_id, IDGenerator};
+use rocket_db_pools::{deadpool_redis::Pool, sqlx::MySqlPool, Database};
+use todel::{
+    ids::{generate_instance_id, IDGenerator},
+    Conf,
+};
 
-const BUCKETS: [&str; 1] = ["avatars"];
+#[derive(Database)]
+#[database("db")]
+pub struct DB(MySqlPool);
 
-#[derive(Debug, FromForm)]
-struct FileData<'a> {
-    name: String,
-    file: TempFile<'a>,
+#[derive(Database)]
+#[database("cache")]
+pub struct Cache(Pool);
+
+fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
+    #[cfg(test)]
+    {
+        env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
+        dotenvy::dotenv().ok();
+        env_logger::init().ok();
+    }
+
+    let conf = Conf::new_from_env()?;
+
+    conf.effis
+        .file_size
+        .parse::<ByteUnit>()
+        .map_err(|err| anyhow!("{}", err))
+        .with_context(|| format!("Invalid file size limit {}", conf.effis.file_size))?;
+    conf.effis
+        .ratelimit
+        .file_size_limit
+        .parse::<ByteUnit>()
+        .map_err(|err| anyhow!("{}", err))
+        .with_context(|| format!("Invalid ratelimit file size limit {}", conf.effis.file_size))?;
+
+    let config = Config::figment()
+        .merge((
+            "limits",
+            Limits::default()
+                .limit("data-form", 20.mebibytes())
+                .limit("file", 20.mebibytes()),
+        ))
+        .merge(("temp_dir", "./data"))
+        .merge((
+            "databases.db",
+            rocket_db_pools::Config {
+                url: env::var("DATABASE_URL")
+                    .unwrap_or_else(|_| "mysql://root:root@localhost:3306/eludris".to_string()),
+                min_connections: None,
+                max_connections: 1024,
+                connect_timeout: 3,
+                idle_timeout: None,
+            },
+        ))
+        .merge((
+            "databases.cache",
+            rocket_db_pools::Config {
+                url: env::var("REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string()),
+                min_connections: None,
+                max_connections: 1024,
+                connect_timeout: 3,
+                idle_timeout: None,
+            },
+        ));
+
+    Ok(rocket::custom(config)
+        .manage(Mutex::new(IDGenerator::new(generate_instance_id())))
+        .manage(conf)
+        .attach(DB::init())
+        .attach(Cache::init())
+        .attach(cors::Cors)
+        .mount("/", routes::routes()))
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(tag = "type")]
-enum UploadResponse {
-    FileTooBig { max_size: u32 },
-    ErrorUploadingFile,
-    Sucess { id: u64 },
-}
-
-#[post("/upload", data = "<data>")]
-async fn upload(
-    data: Form<FileData<'_>>,
-    generator: &State<Mutex<IDGenerator>>,
-) -> Json<UploadResponse> {
-    let mut data = data.into_inner();
-    // 100MB
-    Json(if data.file.len() < 100_000_000 {
-        let id = generator.lock().await.generate_id();
-        match create_dir(format!("files/{}", id)).await {
-            Ok(_) => {
-                match data
-                    .file
-                    .move_copy_to(format!("files/{}/{}", id, data.name))
-                    .await
-                {
-                    Ok(_) => {
-                        log::info!("New Upload with id {}", id);
-                        UploadResponse::Sucess { id }
-                    }
-                    Err(err) => {
-                        log::warn!("Couldn't upload file: {:?}", err);
-                        UploadResponse::ErrorUploadingFile
-                    }
-                }
-            }
-            Err(err) => {
-                log::warn!("Couldn't upload file: {:?}", err);
-                UploadResponse::ErrorUploadingFile
-            }
-        }
-    } else {
-        log::warn!("Got an upload that exeeced the size limit");
-        UploadResponse::FileTooBig {
-            max_size: 10_000_000,
-        }
-    })
-}
-
-#[derive(Debug, Responder)]
-struct FetchResponse<'a> {
-    file: File,
-    disposition: Header<'a>,
-    content_type: ContentType,
-}
-
-#[get("/<id>")]
-async fn fetch<'a>(id: u64) -> Result<FetchResponse<'a>, String> {
-    let files = Path::new("files").join(id.to_string());
-    let filepath = read_dir(files)
-        .await
-        .map_err(|_| "Server failed to retrieve file")?
-        .next_entry()
-        .await
-        .map_err(|_| "Server failed to retrieve file")?
-        .ok_or("File not found")?
-        .path();
-    let filename = filepath
-        .file_name()
-        .ok_or("Server failed to retrieve file")?
-        .to_str()
-        .ok_or("Server failed to retrieve file")?;
-    log::info!("Fetched file with id {}", id);
-    let file = File::open(&filepath).await.map_err(|_| "File not found")?;
-    Ok(FetchResponse {
-        file,
-        disposition: Header::new(
-            "Content-Disposition",
-            format!("inline; filename=\"{}\"", filename),
-        ),
-        content_type: ContentType::from_extension(
-            filename
-                .split('.')
-                .last()
-                .ok_or("Server failed to retrieve file")?,
-        )
-        .ok_or("Server failed to retrieve file")?,
-    })
-}
-
-#[launch]
-fn rocket() -> Rocket<Build> {
-    dotenv::dotenv().ok();
+#[rocket::main]
+async fn main() -> Result<(), anyhow::Error> {
+    dotenvy::dotenv().ok();
     env_logger::init();
 
-    let instance_name =
-        env::var("INSTANCE_NAME").expect("Couldn't find the \"INSTANCE_NAME\" environment varable");
-    let instance_id = generate_instance_id(&instance_name);
-    let generator = IDGenerator::new(instance_id);
-    let generator = Mutex::new(generator);
+    let db_url = env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "mysql://root:root@localhost:3306/eludris".to_string());
 
-    rocket::build()
-        .mount("/", routes![upload, fetch])
-        .manage(generator)
+    let pool = MySqlPool::connect(&db_url)
+        .await
+        .with_context(|| format!("Failed to connect to database on {}", db_url))?;
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .context("Failed to run migrations")?;
+
+    let _ = rocket()?
+        .launch()
+        .await
+        .context("Encountered an error while running Rest API")?;
+
+    Ok(())
 }
