@@ -1,4 +1,5 @@
 /target
 
 .env
-./Eludris.toml
+Eludris.toml
+!tests/Eludris.toml
