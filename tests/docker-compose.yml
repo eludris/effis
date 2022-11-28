@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  keydb:
+    image: eqalpha/keydb
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  mariadb:
+    image: mariadb:latest
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: eludris
+
+    ports:
+      - "3306:3306"
