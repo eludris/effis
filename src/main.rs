@@ -34,7 +34,7 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
     {
         env::set_var("ELUDRIS_CONF", "tests/Eludris.toml");
         dotenvy::dotenv().ok();
-        env_logger::init().ok();
+        env_logger::try_init().ok();
     }
 
     let conf = Conf::new_from_env()?;
