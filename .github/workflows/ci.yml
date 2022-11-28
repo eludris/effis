@@ -35,6 +35,9 @@ jobs:
           toolchain: stable
           override: true
 
+      - run: docker-compose -f tests/docker-compose.yml up -d
+
+      # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -42,6 +45,10 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+        env:
+          RUST_LOG: "trace"
+          REDIS_URL: "redis://127.0.0.1:6379"
+          DATABASE_URL: "mysql://root:root@localhost:6379/eludris"
 
   clippy:
     name: Clippy; Destroyer of Realities.
@@ -56,6 +63,13 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
+
+      - run: docker-compose -f tests/docker-compose.yml up -d
+
+      # Build crates while Kafka starts.
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
 
       - uses: actions-rs/cargo@v1
         with:
