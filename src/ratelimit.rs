@@ -177,10 +177,7 @@ impl Ratelimiter {
         }
     }
 
-    pub fn wrap_response<T, E>(
-        &self,
-        data: T,
-    ) -> Result<RatelimitHeaderWrapper<T>, RatelimitHeaderWrapper<E>> {
+    pub fn wrap_response<T, E>(&self, data: T) -> Result<RatelimitHeaderWrapper<T>, E> {
         Ok(RatelimitHeaderWrapper {
             inner: data,
             ratelimit_reset: Header::new(

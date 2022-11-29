@@ -1,3 +1,4 @@
+#![allow(dead_code)] // TODO: remove this
 use std::path::PathBuf;
 
 use image::io::Reader as ImageReader;
@@ -186,7 +187,7 @@ WHERE id = ?
     ) -> Result<FetchResponse<'a>, ErrorResponse> {
         let file_data = Self::get(id, db)
             .await
-            .ok_or(NotFoundError.to_error_response())?;
+            .ok_or_else(|| NotFoundError.to_error_response())?;
         let file = tokio::fs::File::open(format!("data/{}", file_data.id))
             .await
             .unwrap();
@@ -206,7 +207,7 @@ WHERE id = ?
     ) -> Result<FetchResponse<'a>, ErrorResponse> {
         let file_data = Self::get(id, db)
             .await
-            .ok_or(NotFoundError.to_error_response())?;
+            .ok_or_else(|| NotFoundError.to_error_response())?;
         let file = tokio::fs::File::open(format!("data/{}", file_data.id))
             .await
             .unwrap();
@@ -226,7 +227,7 @@ WHERE id = ?
     ) -> Result<FileData, ErrorResponse> {
         let file = Self::get(id, db)
             .await
-            .ok_or(NotFoundError.to_error_response())?;
+            .ok_or_else(|| NotFoundError.to_error_response())?;
         let metadata = if file.width.is_some() && file.height.is_some() {
             match file.content_type.as_ref() {
                 "image/gif" | "image/jpeg" | "image/png" | "image/webp" => FileMetadata::Image {
