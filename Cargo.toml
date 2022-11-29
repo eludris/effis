@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-todel = { git = "https://github.com/eludris/todel", features = ["http"] }
+todel = { features = ["http"], path = "../todel", version = "0.2.4" }
 anyhow = "1.0.66"
 dotenvy = "0.15.6"
 env_logger = "0.9.1"
@@ -17,10 +17,11 @@ rocket = { version = "0.5.0-rc.2", features = ["json"] }
 rocket_db_pools = { version = "0.1.0-rc.2", features = ["deadpool_redis", "sqlx_mysql", "sqlx_macros"] }
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = "1.0.87"
-serde_with = "2.1.0"
 sha256 = "1.1.1"
 sqlx = { version = "^0.5.0", features = ["runtime-tokio-rustls", "macros", "mysql"] }
 tokio = { version = "1.21.2", features = ["sync", "rt-multi-thread", "macros"] }
 toml = "0.5.9"
 tree_magic = "0.2.3"
 image = "0.24.5"
+imagesize = "0.10.1"
+ffprobe = "0.3.3"

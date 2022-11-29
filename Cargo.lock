@@ -650,7 +650,9 @@ dependencies = [
  "anyhow",
  "dotenvy",
  "env_logger",
+ "ffprobe",
  "image",
+ "imagesize",
  "lazy_static",
  "log",
  "regex",
@@ -658,7 +660,6 @@ dependencies = [
  "rocket_db_pools",
  "serde",
  "serde_json",
- "serde_with",
  "sha256",
  "sqlx",
  "todel",
@@ -723,6 +724,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7a407cfaa3385c4ae6b23e84623d48c2798d06e3e6a1878f7f59f17b3f86499"
 dependencies = [
  "instant",
+]
+
+[[package]]
+name = "ffprobe"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5d603974ab029fc75cebf00bfa06c9c6f49a6fb657f4f5f6a9fd6cbd76910a4"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1137,6 +1148,12 @@ dependencies = [
  "scoped_threadpool",
  "tiff",
 ]
+
+[[package]]
+name = "imagesize"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df19da1e92fbfec043ca97d622955381b1f3ee72a180ec999912df31b1ccd951"
 
 [[package]]
 name = "indexmap"
@@ -2511,13 +2528,13 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "todel"
 version = "0.2.4"
-source = "git+https://github.com/eludris/todel#aeadc7c1609cc634e212d994a7e1ea2e80def504"
 dependencies = [
  "anyhow",
  "lazy_static",
  "log",
  "rocket",
  "serde",
+ "serde_with",
  "toml",
 ]
 
