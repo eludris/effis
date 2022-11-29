@@ -26,7 +26,7 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "mysql://root:root@localhost:6379/eludris"
+      DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
     steps:
       - uses: actions/checkout@v2
@@ -55,7 +55,7 @@ jobs:
     name: Clippy; Destroyer of Realities.
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "mysql://root:root@localhost:6379/eludris"
+      DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
     steps:
       - uses: actions/checkout@v2
