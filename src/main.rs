@@ -8,7 +8,7 @@ mod routes;
 
 use std::env;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 
 use rocket::{
     data::{ByteUnit, Limits, ToByteUnit},
@@ -39,24 +39,15 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
 
     let conf = Conf::new_from_env()?;
 
-    conf.effis
-        .file_size
-        .parse::<ByteUnit>()
-        .map_err(|err| anyhow!("{}", err))
-        .with_context(|| format!("Invalid file size limit {}", conf.effis.file_size))?;
-    conf.effis
-        .ratelimit
-        .file_size_limit
-        .parse::<ByteUnit>()
-        .map_err(|err| anyhow!("{}", err))
-        .with_context(|| format!("Invalid ratelimit file size limit {}", conf.effis.file_size))?;
-
     let config = Config::figment()
         .merge((
             "limits",
             Limits::default()
-                .limit("data-form", 20.mebibytes())
-                .limit("file", 20.mebibytes()),
+                .limit(
+                    "data-form",
+                    conf.effis.attachment_file_size.parse::<ByteUnit>().unwrap() + 1.mebibytes(), // leeway
+                )
+                .limit("file", conf.effis.attachment_file_size.parse().unwrap()),
         ))
         .merge(("temp_dir", "./data"))
         .merge((
