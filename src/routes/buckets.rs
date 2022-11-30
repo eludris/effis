@@ -31,7 +31,7 @@ pub async fn upload<'a>(
         return Err(ratelimiter
             .wrap_response::<_, ()>(
                 ValidationError {
-                    field_name: "board".to_string(),
+                    field_name: "bucket".to_string(),
                     error: "Unknown bucket".to_string(),
                 }
                 .to_error_response(),
@@ -66,7 +66,7 @@ pub async fn fetch<'a>(
         return Err(ratelimiter
             .wrap_response::<_, ()>(
                 ValidationError {
-                    field_name: "board".to_string(),
+                    field_name: "bucket".to_string(),
                     error: "Unknown bucket".to_string(),
                 }
                 .to_error_response(),
@@ -94,7 +94,7 @@ pub async fn fetch_download<'a>(
         return Err(ratelimiter
             .wrap_response::<_, ()>(
                 ValidationError {
-                    field_name: "board".to_string(),
+                    field_name: "bucket".to_string(),
                     error: "Unknown bucket".to_string(),
                 }
                 .to_error_response(),
@@ -122,7 +122,7 @@ pub async fn fetch_data<'a>(
         return Err(ratelimiter
             .wrap_response::<_, ()>(
                 ValidationError {
-                    field_name: "board".to_string(),
+                    field_name: "bucket".to_string(),
                     error: "Unknown bucket".to_string(),
                 }
                 .to_error_response(),
