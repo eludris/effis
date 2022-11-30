@@ -10,7 +10,7 @@ use rocket::{
 use sqlx::{pool::PoolConnection, MySql};
 use todel::models::{ErrorResponseData, FileData, FileMetadata, NotFoundError};
 use todel::{ids::IDGenerator, models::ErrorResponse};
-use tokio::sync::Mutex;
+use tokio::{fs, sync::Mutex};
 
 pub struct File {
     pub id: u128,
@@ -26,7 +26,7 @@ pub struct File {
 
 #[derive(Debug, Responder)]
 pub struct FetchResponse<'a> {
-    pub file: tokio::fs::File,
+    pub file: fs::File,
     pub disposition: Header<'a>,
     pub content_type: ContentType,
 }
@@ -49,7 +49,7 @@ impl File {
         let path = PathBuf::from(format!("./data/{}", id));
         let name = file.name().unwrap_or("attachment").to_string();
         file.persist_to(&path).await.unwrap();
-        let data = tokio::fs::read(&path).await.unwrap();
+        let data = fs::read(&path).await.unwrap();
 
         let hash = sha256::digest(&data[..]);
         let file = if let Ok((file_id, content_type, width, height)) = sqlx::query!(
@@ -64,7 +64,7 @@ WHERE hash = ?
         .await
         .map(|f| (f.file_id, f.content_type, f.width, f.height))
         {
-            tokio::fs::remove_file(path).await.unwrap();
+            fs::remove_file(path).await.unwrap();
             sqlx::query!(
                 "
 INSERT INTO files(id, file_id, name, content_type, hash, bucket, spoiler, width, height)
@@ -195,7 +195,7 @@ WHERE id = ?
         let file_data = Self::get(id, db)
             .await
             .ok_or_else(|| NotFoundError.to_error_response())?;
-        let file = tokio::fs::File::open(format!("data/{}", file_data.id))
+        let file = fs::File::open(format!("data/{}", file_data.id))
             .await
             .unwrap();
         Ok(FetchResponse {
@@ -215,7 +215,7 @@ WHERE id = ?
         let file_data = Self::get(id, db)
             .await
             .ok_or_else(|| NotFoundError.to_error_response())?;
-        let file = tokio::fs::File::open(format!("data/{}", file_data.id))
+        let file = fs::File::open(format!("data/{}", file_data.id))
             .await
             .unwrap();
         Ok(FetchResponse {
