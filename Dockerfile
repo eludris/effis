@@ -11,6 +11,9 @@ RUN rm src/*.rs
 COPY ./src ./src
 
 RUN rm ./target/release/deps/effis*
+
+COPY migrations ./migrations
+
 RUN cargo build --release
 
 
@@ -18,7 +21,7 @@ FROM debian:buster-slim
 
 COPY --from=builder /effis/target/release/effis /bin/effis
 
-COPY ./migrations ./migrations
+COPY migrations ./migrations
 
 # Don't forget to also publish these ports in the docker-compose.yml file.
 ARG PORT=7161

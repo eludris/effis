@@ -103,11 +103,15 @@ async fn main() -> Result<(), anyhow::Error> {
         fs::create_dir("files")
             .await
             .context("Failed to create files directory")?;
+    }
+    if fs::read_dir("files/static").await.is_err() {
         fs::create_dir("files/static")
             .await
             .context("Failed to create files/static directory")?;
-        for dir in BUCKETS.iter() {
-            let dir = format!("files/{dir}");
+    }
+    for dir in BUCKETS.iter() {
+        let dir = format!("files/{dir}");
+        if fs::read_dir(&dir).await.is_err() {
             fs::create_dir(&dir)
                 .await
                 .with_context(|| format!("Failed to create {} directory", dir))?;
