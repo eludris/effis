@@ -20,6 +20,9 @@ use todel::{
     ids::{generate_instance_id, IDGenerator},
     Conf,
 };
+use tokio::fs;
+
+pub const BUCKETS: [&str; 1] = ["attachments"];
 
 #[derive(Database)]
 #[database("db")]
@@ -96,6 +99,21 @@ async fn main() -> Result<(), anyhow::Error> {
         .run(&pool)
         .await
         .context("Failed to run migrations")?;
+
+    if fs::read_dir("files").await.is_err() {
+        fs::create_dir("files")
+            .await
+            .context("Failed to create files directory")?;
+        fs::create_dir("files/static")
+            .await
+            .context("Failed to create files/static directory")?;
+        for dir in BUCKETS.iter() {
+            let dir = format!("files/{dir}");
+            fs::create_dir(&dir)
+                .await
+                .with_context(|| format!("Failed to create {} directory", dir))?;
+        }
+    }
 
     let _ = rocket()?
         .launch()
