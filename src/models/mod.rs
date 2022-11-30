@@ -245,8 +245,7 @@ WHERE id = ?
                     width: self.width,
                     height: self.height,
                 },
-                // TODO: get video width and height
-                "video/mp4" | "video/webm" | "video/quicktime" => FileMetadata::Image {
+                "video/mp4" | "video/webm" | "video/quicktime" => FileMetadata::Video {
                     width: self.width,
                     height: self.height,
                 },
