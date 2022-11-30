@@ -25,8 +25,6 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
     steps:
       - uses: actions/checkout@v2
@@ -39,7 +37,6 @@ jobs:
 
       - run: docker-compose -f tests/docker-compose.yml up -d
 
-      # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -50,12 +47,11 @@ jobs:
         env:
           RUST_LOG: "trace"
           REDIS_URL: "redis://127.0.0.1:6379"
+          DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
   clippy:
     name: Clippy; Destroyer of Realities.
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
     steps:
       - uses: actions/checkout@v2
@@ -69,10 +65,11 @@ jobs:
 
       - run: docker-compose -f tests/docker-compose.yml up -d
 
-      # Build crates while Kafka starts.
       - uses: actions-rs/cargo@v1
         with:
           command: build
+        env:
+          DATABASE_URL: "mysql://root:root@localhost:3306/eludris"
 
       - uses: actions-rs/cargo@v1
         with:
