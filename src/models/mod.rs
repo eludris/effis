@@ -46,7 +46,7 @@ impl File {
         spoiler: bool,
     ) -> Result<FileData, ErrorResponse> {
         let id = gen.lock().await.generate_id();
-        let path = PathBuf::from(format!("./data/{}", id));
+        let path = PathBuf::from(format!("files/{}/{}", bucket, id));
         let name = file.name().unwrap_or("attachment").to_string();
         file.persist_to(&path).await.unwrap();
         let data = fs::read(&path).await.unwrap();
