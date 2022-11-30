@@ -18,7 +18,7 @@ FROM debian:buster-slim
 
 COPY --from=builder /effis/target/release/effis /bin/effis
 
-COPY Rocket.toml Rocket.toml
+COPY ./migrations ./migrations
 
 # Don't forget to also publish these ports in the docker-compose.yml file.
 ARG PORT=7161
