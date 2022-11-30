@@ -650,22 +650,12 @@ dependencies = [
  "anyhow",
  "dotenvy",
  "env_logger",
- "ffprobe",
- "image",
- "imagesize",
- "lazy_static",
  "log",
- "regex",
  "rocket",
  "rocket_db_pools",
- "serde",
- "serde_json",
- "sha256",
  "sqlx",
  "todel",
  "tokio",
- "toml",
- "tree_magic",
 ]
 
 [[package]]
@@ -2535,15 +2525,22 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 [[package]]
 name = "todel"
 version = "0.2.4"
-source = "git+https://github.com/eludris/todel#3bf0c02692b600ce8c910747f9f6809eb8fb94eb"
+source = "git+https://github.com/eludris/todel#55cec110a41904d7bf2bee9fe39a099515de9aac"
 dependencies = [
  "anyhow",
+ "ffprobe",
+ "image",
+ "imagesize",
  "lazy_static",
  "log",
  "rocket",
  "serde",
  "serde_with",
+ "sha256",
+ "sqlx",
+ "tokio",
  "toml",
+ "tree_magic",
 ]
 
 [[package]]

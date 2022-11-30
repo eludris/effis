@@ -11,12 +11,13 @@ use rocket::{
 use rocket_db_pools::Connection;
 use todel::{
     http::ClientIP,
-    models::{ErrorResponse, ErrorResponseData, NotFoundError, ServerError, ValidationError},
+    models::{
+        ErrorResponse, ErrorResponseData, FetchResponse, NotFoundError, ServerError,
+        ValidationError,
+    },
     Conf,
 };
 use tokio::fs::File;
-
-use crate::models::FetchResponse;
 
 #[get("/static/<name>")]
 pub async fn fetch_static_file<'a>(

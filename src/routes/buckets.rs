@@ -3,13 +3,12 @@ use rocket_db_pools::Connection;
 use todel::{
     http::ClientIP,
     ids::IDGenerator,
-    models::{ErrorResponseData, FileData, ValidationError},
+    models::{ErrorResponseData, FetchResponse, File, FileData, FileUpload, ValidationError},
     Conf,
 };
 use tokio::sync::Mutex;
 
 use crate::{
-    models::{FetchResponse, File, FileUpload},
     ratelimit::{RatelimitedRouteResponse, Ratelimiter},
     Cache, BUCKETS, DB,
 };

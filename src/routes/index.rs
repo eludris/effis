@@ -1,10 +1,14 @@
 use rocket::{form::Form, serde::json::Json, State};
 use rocket_db_pools::Connection;
-use todel::{http::ClientIP, ids::IDGenerator, models::FileData, Conf};
+use todel::{
+    http::ClientIP,
+    ids::IDGenerator,
+    models::{FetchResponse, File, FileData, FileUpload},
+    Conf,
+};
 use tokio::sync::Mutex;
 
 use crate::{
-    models::{FetchResponse, File, FileUpload},
     ratelimit::{RatelimitedRouteResponse, Ratelimiter},
     Cache, DB,
 };

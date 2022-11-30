@@ -2,7 +2,6 @@
 extern crate rocket;
 
 mod cors;
-mod models;
 mod ratelimit;
 mod routes;
 
