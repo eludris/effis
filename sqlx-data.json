@@ -1,0 +1,206 @@
+{
+  "db": "MySQL",
+  "0e3ac353e42ea7f70d876d063414e657e59500c9b071d7d26aa22d2d364f2b1c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Right": 9
+      }
+    },
+    "query": "\nINSERT INTO files(id, file_id, name, content_type, hash, bucket, spoiler, width, height)\nVALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)\n                "
+  },
+  "86411516288c1155a7f8b4efb3420a910338569107501e5d8969350195e2ad1b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4099
+            },
+            "max_size": 80,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "file_id",
+          "ordinal": 1,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 80,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 256,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "content_type",
+          "ordinal": 3,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 128,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "hash",
+          "ordinal": 4,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 256,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "bucket",
+          "ordinal": 5,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 128,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "spoiler",
+          "ordinal": 6,
+          "type_info": {
+            "char_set": 63,
+            "flags": {
+              "bits": 1
+            },
+            "max_size": 1,
+            "type": "Tiny"
+          }
+        },
+        {
+          "name": "width",
+          "ordinal": 7,
+          "type_info": {
+            "char_set": 63,
+            "flags": {
+              "bits": 32
+            },
+            "max_size": 10,
+            "type": "Long"
+          }
+        },
+        {
+          "name": "height",
+          "ordinal": 8,
+          "type_info": {
+            "char_set": 63,
+            "flags": {
+              "bits": 32
+            },
+            "max_size": 10,
+            "type": "Long"
+          }
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nSELECT *\nFROM files\nWHERE id = ?\n            "
+  },
+  "a5b9c41aed9826fe30acf42cf6dfa6da6c2118d64f19f6517bd2dcc3615ae0dc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "file_id",
+          "ordinal": 0,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 80,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "content_type",
+          "ordinal": 1,
+          "type_info": {
+            "char_set": 224,
+            "flags": {
+              "bits": 4097
+            },
+            "max_size": 128,
+            "type": "VarString"
+          }
+        },
+        {
+          "name": "width",
+          "ordinal": 2,
+          "type_info": {
+            "char_set": 63,
+            "flags": {
+              "bits": 32
+            },
+            "max_size": 10,
+            "type": "Long"
+          }
+        },
+        {
+          "name": "height",
+          "ordinal": 3,
+          "type_info": {
+            "char_set": 63,
+            "flags": {
+              "bits": 32
+            },
+            "max_size": 10,
+            "type": "Long"
+          }
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Right": 1
+      }
+    },
+    "query": "\nSELECT file_id, content_type, width, height\nFROM files\nWHERE hash = ?\n            "
+  }
+}
