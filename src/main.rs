@@ -49,7 +49,7 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
                 )
                 .limit("file", conf.effis.attachment_file_size.parse().unwrap()),
         ))
-        .merge(("temp_dir", "./data"))
+        .merge(("temp_dir", "files"))
         .merge((
             "databases.db",
             rocket_db_pools::Config {
