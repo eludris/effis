@@ -8,7 +8,7 @@ use rocket::{
     http::{ContentType, Header},
 };
 use sqlx::{pool::PoolConnection, MySql};
-use todel::models::{ErrorResponseData, FileData, FileMetadata, NotFoundError};
+use todel::models::{ErrorResponseData, FileData, FileMetadata, NotFoundError, ValidationError};
 use todel::{ids::IDGenerator, models::ErrorResponse};
 use tokio::{fs, sync::Mutex};
 
@@ -57,8 +57,10 @@ impl File {
 SELECT file_id, content_type, width, height
 FROM files
 WHERE hash = ?
+AND bucket = ?
             ",
             hash,
+            bucket,
         )
         .fetch_one(&mut *db)
         .await
@@ -78,7 +80,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                 bucket,
                 spoiler,
                 width,
-                height
+                height,
             )
             .execute(&mut *db)
             .await
@@ -114,6 +116,16 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                             .unwrap_or((None, None))
                     }
                     "video/mp4" | "video/webm" | "video/quicktime" => {
+                        if &bucket != "attachments" {
+                            std::fs::remove_file(path).unwrap();
+                            return Err(ValidationError {
+                                field_name: "content_type".to_string(),
+                                error: "Non atatchment buckets can only have images and gifs"
+                                    .to_string(),
+                            }
+                            .to_error_response());
+                        };
+
                         let mut dimensions = (None, None);
                         for stream in ffprobe::ffprobe(&path).unwrap().streams.iter() {
                             if let (Some(width), Some(height)) = (stream.width, stream.height) {
@@ -122,9 +134,21 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                         }
                         dimensions
                     }
-                    _ => (None, None),
+                    _ => {
+                        if &bucket != "attachments" {
+                            std::fs::remove_file(path).unwrap();
+                            return Err(ValidationError {
+                                field_name: "content_type".to_string(),
+                                error: "Non atatchment buckets can only have images and gifs"
+                                    .to_string(),
+                            }
+                            .to_error_response());
+                        };
+
+                        (None, None)
+                    }
                 };
-                Self {
+                Ok(Self {
                     id,
                     file_id: id,
                     name,
@@ -134,10 +158,10 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                     spoiler,
                     width,
                     height,
-                }
+                })
             })
             .await
-            .unwrap();
+            .unwrap()?;
             sqlx::query!(
                 "
 INSERT INTO files(id, file_id, name, content_type, hash, bucket, spoiler, width, height)
@@ -163,14 +187,20 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
         Ok(file.get_file_data())
     }
 
-    pub async fn get(id: u128, db: &mut PoolConnection<MySql>) -> Option<Self> {
+    pub async fn get<'a>(
+        id: u128,
+        bucket: &'a str,
+        db: &mut PoolConnection<MySql>,
+    ) -> Option<Self> {
         sqlx::query!(
             "
 SELECT *
 FROM files
 WHERE id = ?
+AND bucket = ?
             ",
             id.to_string(),
+            bucket,
         )
         .fetch_one(&mut *db)
         .await
@@ -190,12 +220,13 @@ WHERE id = ?
 
     pub async fn fetch_file<'a>(
         id: u128,
+        bucket: &'a str,
         db: &mut PoolConnection<MySql>,
     ) -> Result<FetchResponse<'a>, ErrorResponse> {
-        let file_data = Self::get(id, db)
+        let file_data = Self::get(id, bucket, db)
             .await
             .ok_or_else(|| NotFoundError.to_error_response())?;
-        let file = fs::File::open(format!("data/{}", file_data.id))
+        let file = fs::File::open(format!("files/{}/{}", bucket, file_data.id))
             .await
             .unwrap();
         Ok(FetchResponse {
@@ -210,12 +241,13 @@ WHERE id = ?
 
     pub async fn fetch_file_download<'a>(
         id: u128,
+        bucket: &'a str,
         db: &mut PoolConnection<MySql>,
     ) -> Result<FetchResponse<'a>, ErrorResponse> {
-        let file_data = Self::get(id, db)
+        let file_data = Self::get(id, bucket, db)
             .await
             .ok_or_else(|| NotFoundError.to_error_response())?;
-        let file = fs::File::open(format!("data/{}", file_data.id))
+        let file = fs::File::open(format!("files/{}/{}", bucket, file_data.id))
             .await
             .unwrap();
         Ok(FetchResponse {
@@ -228,11 +260,12 @@ WHERE id = ?
         })
     }
 
-    pub async fn fetch_file_data(
+    pub async fn fetch_file_data<'a>(
         id: u128,
+        bucket: &'a str,
         db: &mut PoolConnection<MySql>,
     ) -> Result<FileData, ErrorResponse> {
-        Self::get(id, db)
+        Self::get(id, &bucket, db)
             .await
             .ok_or_else(|| NotFoundError.to_error_response())
             .map(|f| f.get_file_data())
