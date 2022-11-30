@@ -1,3 +1,4 @@
+#![allow(clippy::unnecessary_lazy_evaluations)] // Needed because rocket
 #![allow(dead_code)] // TODO: remove this
 use std::path::PathBuf;
 
@@ -30,6 +31,12 @@ pub struct FetchResponse<'a> {
     pub content_type: ContentType,
 }
 
+#[derive(Debug, FromForm)]
+pub struct FileUpload<'a> {
+    pub file: TempFile<'a>,
+    pub spoiler: bool,
+}
+
 impl File {
     pub async fn create<'a>(
         mut file: TempFile<'a>,
@@ -37,10 +44,10 @@ impl File {
         gen: &Mutex<IDGenerator>,
         db: &mut PoolConnection<MySql>,
         spoiler: bool,
-    ) -> Result<Self, ErrorResponse> {
+    ) -> Result<FileData, ErrorResponse> {
         let id = gen.lock().await.generate_id();
         let path = PathBuf::from(format!("./data/{}", id));
-        let name = file.name().unwrap().to_string();
+        let name = file.name().unwrap_or("attachment").to_string();
         file.persist_to(&path).await.unwrap();
         let data = tokio::fs::read(&path).await.unwrap();
 
@@ -153,7 +160,7 @@ VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
             file
         };
 
-        Ok(file)
+        Ok(file.get_file_data())
     }
 
     pub async fn get(id: u128, db: &mut PoolConnection<MySql>) -> Option<Self> {
@@ -225,33 +232,37 @@ WHERE id = ?
         id: u128,
         db: &mut PoolConnection<MySql>,
     ) -> Result<FileData, ErrorResponse> {
-        let file = Self::get(id, db)
+        Self::get(id, db)
             .await
-            .ok_or_else(|| NotFoundError.to_error_response())?;
-        let metadata = if file.width.is_some() && file.height.is_some() {
-            match file.content_type.as_ref() {
+            .ok_or_else(|| NotFoundError.to_error_response())
+            .map(|f| f.get_file_data())
+    }
+
+    pub fn get_file_data(self) -> FileData {
+        let metadata = if self.width.is_some() && self.height.is_some() {
+            match self.content_type.as_ref() {
                 "image/gif" | "image/jpeg" | "image/png" | "image/webp" => FileMetadata::Image {
-                    width: file.width,
-                    height: file.height,
+                    width: self.width,
+                    height: self.height,
                 },
                 // TODO: get video width and height
                 "video/mp4" | "video/webm" | "video/quicktime" => FileMetadata::Image {
-                    width: file.width,
-                    height: file.height,
+                    width: self.width,
+                    height: self.height,
                 },
-                _ if file.content_type.starts_with("text") => FileMetadata::Text,
+                _ if self.content_type.starts_with("text") => FileMetadata::Text,
                 _ => FileMetadata::Other,
             }
         } else {
             FileMetadata::Other
         };
 
-        Ok(FileData {
-            id: file.id,
-            name: file.name,
-            bucket: file.bucket,
+        FileData {
+            id: self.id,
+            name: self.name,
+            bucket: self.bucket,
             metadata,
-            spoiler: file.spoiler,
-        })
+            spoiler: self.spoiler,
+        }
     }
 }
