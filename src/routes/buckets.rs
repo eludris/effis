@@ -25,7 +25,7 @@ pub async fn upload<'a>(
 ) -> RatelimitedRouteResponse<Json<FileData>> {
     let mut ratelimiter = Ratelimiter::new("attachments", bucket, ip, conf.inner());
     ratelimiter
-        .process_ratelimit(upload.file.len() as u128, &mut cache)
+        .process_ratelimit(upload.file.len(), &mut cache)
         .await?;
     if !BUCKETS.contains(&bucket) {
         return Err(ratelimiter

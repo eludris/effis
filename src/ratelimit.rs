@@ -3,7 +3,7 @@ use std::{
     time::{Duration, SystemTime},
 };
 
-use rocket::{data::ByteUnit, http::Header, response::Responder};
+use rocket::{http::Header, response::Responder};
 use rocket_db_pools::{deadpool_redis::redis::AsyncCommands, Connection};
 use todel::{
     models::{ErrorResponse, ErrorResponseData, FileSizeRatelimitedError, RatelimitError},
@@ -32,10 +32,10 @@ pub struct Ratelimiter {
     key: String,
     reset_after: Duration,
     request_limit: u32,
-    file_size_limit: u128,
+    file_size_limit: u64,
     request_count: u32,
     last_reset: u64,
-    sent_bytes: u128,
+    sent_bytes: u64,
 }
 
 impl Ratelimiter {
@@ -48,17 +48,17 @@ impl Ratelimiter {
             "assets" => (
                 &conf.effis.ratelimits.assets.reset_after,
                 &conf.effis.ratelimits.assets.limit,
-                conf.effis.ratelimits.assets.file_size_limit.as_ref(),
+                conf.effis.ratelimits.assets.file_size_limit,
             ),
             "attachments" => (
                 &conf.effis.ratelimits.attachments.reset_after,
                 &conf.effis.ratelimits.attachments.limit,
-                conf.effis.ratelimits.attachments.file_size_limit.as_ref(),
+                conf.effis.ratelimits.attachments.file_size_limit,
             ),
             "fetch_file" => (
                 &conf.effis.ratelimits.fetch_file.reset_after,
                 &conf.effis.ratelimits.fetch_file.limit,
-                "0MB",
+                0,
             ),
 
             _ => unreachable!(),
@@ -67,7 +67,7 @@ impl Ratelimiter {
             key: format!("ratelimit:{}:{}-{}", identifier, bucket, attachment_bucket),
             reset_after: Duration::from_secs(*reset_after as u64),
             request_limit: *request_limit,
-            file_size_limit: file_size_limit.parse::<ByteUnit>().unwrap().as_u128(),
+            file_size_limit,
             request_count: 0,
             last_reset: 0,
             sent_bytes: 0,
@@ -77,7 +77,7 @@ impl Ratelimiter {
     /// Checks if a bucket is ratelimited, if so returns an Error with an ErrorResponse
     pub async fn process_ratelimit(
         &mut self,
-        bytes: u128,
+        bytes: u64,
         cache: &mut Connection<Cache>,
     ) -> Result<(), RatelimitHeaderWrapper<ErrorResponse>> {
         let now = SystemTime::now()
@@ -98,7 +98,7 @@ impl Ratelimiter {
         }
 
         if let (Some(last_reset), Some(request_count), Some(sent_bytes)) = cache
-            .hget::<&str, (&str, &str, &str), (Option<u64>, Option<u32>, Option<u128>)>(
+            .hget::<&str, (&str, &str, &str), (Option<u64>, Option<u32>, Option<u64>)>(
                 &self.key,
                 ("last_reset", "request_count", "sent_bytes"),
             )
@@ -154,7 +154,7 @@ impl Ratelimiter {
                     .expect("Couldn't query cache");
                 self.request_count += 1;
                 cache
-                    .hincr::<&str, &str, u64, ()>(&self.key, "sent_bytes", bytes as u64)
+                    .hincr::<&str, &str, u64, ()>(&self.key, "sent_bytes", bytes)
                     .await
                     .expect("Couldn't query cache");
                 self.sent_bytes += bytes;
@@ -168,7 +168,7 @@ impl Ratelimiter {
                     &[
                         ("last_reset", now),
                         ("request_count", 1),
-                        ("sent_bytes", bytes as u64),
+                        ("sent_bytes", bytes),
                     ],
                 )
                 .await

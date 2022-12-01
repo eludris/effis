@@ -10,7 +10,7 @@ use std::env;
 use anyhow::Context;
 
 use rocket::{
-    data::{ByteUnit, Limits, ToByteUnit},
+    data::{Limits, ToByteUnit},
     tokio::sync::Mutex,
     Build, Config, Rocket,
 };
@@ -47,9 +47,9 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
             Limits::default()
                 .limit(
                     "data-form",
-                    conf.effis.attachment_file_size.parse::<ByteUnit>().unwrap() + 1.mebibytes(), // leeway
+                    conf.effis.attachment_file_size.bytes() + 1.mebibytes(), // leeway
                 )
-                .limit("file", conf.effis.attachment_file_size.parse().unwrap()),
+                .limit("file", conf.effis.attachment_file_size.bytes()),
         ))
         .merge(("temp_dir", "files"))
         .merge((

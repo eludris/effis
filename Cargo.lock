@@ -2524,8 +2524,8 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "todel"
-version = "0.2.4"
-source = "git+https://github.com/eludris/todel#55cec110a41904d7bf2bee9fe39a099515de9aac"
+version = "0.3.0"
+source = "git+https://github.com/eludris/todel#69c4c9e2c035cb31cfca51b6aeb571e5686bcc80"
 dependencies = [
  "anyhow",
  "ffprobe",
@@ -2541,6 +2541,8 @@ dependencies = [
  "tokio",
  "toml",
  "tree_magic",
+ "ubyte",
+ "url",
 ]
 
 [[package]]
