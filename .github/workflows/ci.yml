@@ -21,6 +21,8 @@ jobs:
           override: true
           components: rustfmt
 
+      - uses: Swatinem/rust-cache@v2
+
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
@@ -43,6 +45,8 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+
+      - uses: Swatinem/rust-cache@v2
 
       - run: docker-compose -f tests/docker-compose.yml up -d
 
@@ -71,6 +75,8 @@ jobs:
           toolchain: stable
           override: true
           components: clippy
+
+      - uses: Swatinem/rust-cache@v2
 
       - run: docker-compose -f tests/docker-compose.yml up -d
 
