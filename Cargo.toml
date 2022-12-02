@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-todel = { features = ["http"], git = "https://github.com/eludris/todel" }
+todel = { features = ["http"], version = "0.3.0", git = "https://github.com/eludris/todel" }
 anyhow = "1.0.66"
 dotenvy = "0.15.6"
 env_logger = "0.9.1"
