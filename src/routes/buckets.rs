@@ -38,6 +38,17 @@ pub async fn upload<'a>(
             )
             .unwrap());
     }
+    if upload.file.len() == 0 {
+        Err(ratelimiter
+            .wrap_response::<_, ()>(
+                ValidationError {
+                    field_name: "file".to_string(),
+                    error: "You cannot upload empty files".to_string(),
+                }
+                .to_error_response(),
+            )
+            .unwrap())?;
+    }
     let upload = upload.into_inner();
     let file = File::create(
         upload.file,

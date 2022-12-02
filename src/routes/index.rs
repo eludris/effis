@@ -3,7 +3,7 @@ use rocket_db_pools::Connection;
 use todel::{
     http::ClientIP,
     ids::IDGenerator,
-    models::{FetchResponse, File, FileData, FileUpload},
+    models::{ErrorResponseData, FetchResponse, File, FileData, FileUpload, ValidationError},
     Conf,
 };
 use tokio::sync::Mutex;
@@ -26,6 +26,17 @@ pub async fn upload<'a>(
     ratelimiter
         .process_ratelimit(upload.file.len(), &mut cache)
         .await?;
+    if upload.file.len() == 0 {
+        Err(ratelimiter
+            .wrap_response::<_, ()>(
+                ValidationError {
+                    field_name: "file".to_string(),
+                    error: "You cannot upload empty files".to_string(),
+                }
+                .to_error_response(),
+            )
+            .unwrap())?;
+    }
     let upload = upload.into_inner();
     let file = File::create(
         upload.file,
