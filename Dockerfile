@@ -19,6 +19,8 @@ RUN cargo build --release
 
 FROM debian:buster-slim
 
+RUN apt-get update && apt-get install -y ffmpeg
+
 COPY --from=builder /effis/target/release/effis /bin/effis
 
 COPY migrations ./migrations
