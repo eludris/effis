@@ -1,27 +1,22 @@
+# syntax=docker/dockerfile:1
 FROM rust:slim-buster as builder
 
-RUN USER=root cargo new --bin effis
 WORKDIR /effis
 
 COPY Cargo.lock Cargo.toml ./
-
-RUN cargo build --release
-RUN rm src/*.rs
-
 COPY ./src ./src
+COPY ./migrations ./migrations
 
-RUN rm ./target/release/deps/effis*
-
-COPY migrations ./migrations
-
-RUN cargo build --release
-
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/effis/target \
+    cargo build --release
+# Other image cannot access the target folder.
+RUN --mount=type=cache,target=/effis/target \
+    cp ./target/release/effis /usr/local/bin/effis
 
 FROM debian:buster-slim
 
-RUN apt-get update && apt-get install -y ffmpeg
-
-COPY --from=builder /effis/target/release/effis /bin/effis
+COPY --from=builder /usr/local/bin/effis /bin/effis
 
 COPY migrations ./migrations
 
@@ -35,4 +30,3 @@ ENV ROCKET_PORT $PORT
 ENV RUST_LOG debug
 
 CMD ["/bin/effis"]
-
