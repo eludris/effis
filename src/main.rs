@@ -43,6 +43,13 @@ fn rocket() -> Result<Rocket<Build>, anyhow::Error> {
 
     let config = Config::figment()
         .merge((
+            "port",
+            env::var("EFFIS_PORT")
+                .unwrap_or_else(|_| "7161".to_string())
+                .parse::<u32>()
+                .context("Invalid \"EFFIS_PORT\" environment variable")?,
+        ))
+        .merge((
             "limits",
             Limits::default()
                 .limit(
